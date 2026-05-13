@@ -32,6 +32,9 @@ autoscaling:
 # ── PostgreSQL (Bitnami sub-chart) ─────────────────────────────────────────────
 postgresql:
   enabled: true
+  image:
+    tag: latest
+    pullPolicy: IfNotPresent
   auth:
     username: postgres
     password: postgres
@@ -44,6 +47,8 @@ postgresql:
 # ── Redis (Bitnami sub-chart) ─────────────────────────────────────────────────
 redis:
   enabled: true
+  image:
+    tag: latest
   auth:
     enabled: false
   master:
