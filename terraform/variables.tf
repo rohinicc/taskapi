@@ -2,6 +2,18 @@ variable "aws_region" {
   default = "ap-south-1"
 }
 
+variable "aws_access_key" {
+  description = "AWS Access Key ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_key" {
+  description = "AWS Secret Access Key"
+  type        = string
+  sensitive   = true
+}
+
 variable "project" {
   default = "taskapi"
 }
@@ -23,12 +35,12 @@ variable "public_key_path" {
 
 variable "github_repo" {
   description = "Your GitHub repo URL for the app (user-data will clone it)"
-    default     = "https://github.com/rohinicc/taskapi.git"
+  default     = "https://github.com/rohinicc/taskapi.git"
 }
 
 variable "tags" {
   default = {
-    Project     = "taskapi"
-    ManagedBy   = "terraform"
+    Project   = "taskapi"
+    ManagedBy = "terraform"
   }
 }

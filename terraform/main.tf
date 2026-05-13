@@ -9,7 +9,9 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region     = var.aws_region
+  access_key = var.aws_access_key
+  secret_key = var.aws_secret_key
 }
 
 # ── VPC ──
@@ -107,11 +109,11 @@ resource "aws_key_pair" "deployer" {
 
 # ── Single EC2 Instance (t3.micro — Free Tier) ──
 resource "aws_instance" "app" {
-  ami                    = var.ami_id
-  instance_type          = "t3.micro"
-  subnet_id              = aws_subnet.public.id
-  vpc_security_group_ids = [aws_security_group.app.id]
-  key_name               = aws_key_pair.deployer.key_name
+  ami                         = var.ami_id
+  instance_type               = "t3.micro"
+  subnet_id                   = aws_subnet.public.id
+  vpc_security_group_ids      = [aws_security_group.app.id]
+  key_name                    = aws_key_pair.deployer.key_name
   associate_public_ip_address = true
 
   root_block_device {
