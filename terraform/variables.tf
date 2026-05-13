@@ -23,7 +23,7 @@ variable "public_key_path" {
 
 variable "github_repo" {
   description = "Your GitHub repo URL for the app (user-data will clone it)"
-  default     = "https://github.com/YOUR_GITHUB_USERNAME/taskapi.git"
+    default     = "https://github.com/rohinicc/taskapi.git"
 }
 
 variable "tags" {
