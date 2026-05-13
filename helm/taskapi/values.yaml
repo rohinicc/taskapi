@@ -1,0 +1,62 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/YOUR_GITHUB_USERNAME/taskapi/taskapi
+  pullPolicy: IfNotPresent
+  tag: latest          # <-- CI/CD pipeline updates this field
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: true
+  className: nginx
+  host: taskapi.local
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+# ── PostgreSQL (Bitnami sub-chart) ─────────────────────────────────────────────
+postgresql:
+  enabled: true
+  auth:
+    username: postgres
+    password: postgres
+    database: taskdb
+  primary:
+    persistence:
+      enabled: true
+      size: 5Gi
+
+# ── Redis (Bitnami sub-chart) ─────────────────────────────────────────────────
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 1Gi
+
+# ── Monitoring ────────────────────────────────────────────────────────────────
+serviceMonitor:
+  enabled: true          # requires prometheus-operator CRD
+  interval: 15s
+  path: /metrics
+
+env:
+  DATABASE_URL: ""       # injected from secret
+  REDIS_URL: ""          # injected from secret

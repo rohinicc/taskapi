@@ -1,0 +1,40 @@
+# kube-prometheus-stack values
+# helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+# helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+#   -n monitoring --create-namespace -f monitoring/prometheus-values.yaml
+
+grafana:
+  enabled: true
+  adminPassword: "admin123"   # change in production
+  service:
+    type: NodePort
+    nodePort: 30030
+  persistence:
+    enabled: true
+    size: 5Gi
+
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+    # Auto-discover ServiceMonitors across all namespaces
+    serviceMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorNamespaceSelector: {}
+    serviceMonitorSelector: {}
+
+# Node exporter - collects host metrics
+nodeExporter:
+  enabled: true
+
+# kube-state-metrics - K8s object metrics
+kubeStateMetrics:
+  enabled: true
+
+alertmanager:
+  enabled: true

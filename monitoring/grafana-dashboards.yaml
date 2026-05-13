@@ -1,0 +1,35 @@
+# Save this as a ConfigMap and mount into Grafana,
+# or import via Grafana UI (Dashboard ID: 17175 for FastAPI)
+
+# Key panels to configure:
+#
+# 1. Request Rate
+#    PromQL: rate(http_requests_total{job="taskapi"}[5m])
+#
+# 2. Error Rate (5xx)
+#    PromQL: rate(http_requests_total{job="taskapi",status=~"5.."}[5m])
+#
+# 3. P99 Latency
+#    PromQL: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job="taskapi"}[5m]))
+#
+# 4. Active Connections
+#    PromQL: sum(kube_pod_status_ready{namespace="taskapi"})
+#
+# 5. CPU Usage per Pod
+#    PromQL: rate(container_cpu_usage_seconds_total{namespace="taskapi"}[5m])
+#
+# 6. Memory Usage per Pod
+#    PromQL: container_memory_working_set_bytes{namespace="taskapi"}
+#
+# 7. Redis Cache Hit Rate
+#    PromQL: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total)
+#
+# 8. PostgreSQL Active Connections
+#    PromQL: pg_stat_activity_count{datname="taskdb"}
+#
+# Recommended Grafana Dashboard IDs to import:
+# - FastAPI Observability:    17175
+# - Node Exporter Full:       1860
+# - Kubernetes Cluster:       7249
+# - Redis Dashboard:          763
+# - PostgreSQL:               9628
