@@ -9,7 +9,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/YOUR_GITHUB_USERNAME/taskapi.git
+    repoURL: https://github.com/rohinicc/taskapi.git
     targetRevision: HEAD
     path: helm/taskapi
     helm:

@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  repository: ghcr.io/YOUR_GITHUB_USERNAME/taskapi/taskapi
+  repository: ghcr.io/rohinicc/taskapi/taskapi
   pullPolicy: IfNotPresent
   tag: latest          # <-- CI/CD pipeline updates this field
 
@@ -10,7 +10,7 @@ service:
   port: 8000
 
 ingress:
-  enabled: true
+  enabled: false
   className: nginx
   host: taskapi.local
   tls: []
@@ -53,7 +53,7 @@ redis:
 
 # ── Monitoring ────────────────────────────────────────────────────────────────
 serviceMonitor:
-  enabled: true          # requires prometheus-operator CRD
+  enabled: false          # requires prometheus-operator CRD
   interval: 15s
   path: /metrics
 
