@@ -30,7 +30,7 @@ variable "ami_id" {
 
 variable "public_key_path" {
   description = "Path to your SSH public key"
-  default     = "~/.ssh/id_rsa.pub"
+  default     = "~/.ssh/rohini_2004_jsp.pub"
 }
 
 variable "github_repo" {
