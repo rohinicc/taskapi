@@ -6,55 +6,63 @@ terraform {
       version = "~> 5.0"
     }
   }
-  backend "s3" {
-    bucket = "your-tf-state-bucket"
-    key    = "taskapi/terraform.tfstate"
-    region = "ap-south-1"
-  }
 }
 
 provider "aws" {
   region = var.aws_region
 }
 
-# ── VPC ───────────────────────────────────────────────────────────────────────
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "5.8.1"
-
-  name = "${var.project}-vpc"
-  cidr = "10.0.0.0/16"
-
-  azs             = ["${var.aws_region}a", "${var.aws_region}b"]
-  public_subnets  = ["10.0.1.0/24", "10.0.2.0/24"]
-  private_subnets = ["10.0.11.0/24", "10.0.12.0/24"]
-
-  enable_nat_gateway   = true
-  single_nat_gateway   = true
+# ── VPC ──
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  tags = var.tags
+  tags = merge(var.tags, { Name = "${var.project}-vpc" })
 }
 
-# ── Security Groups ───────────────────────────────────────────────────────────
-resource "aws_security_group" "k8s_nodes" {
-  name   = "${var.project}-k8s-nodes"
-  vpc_id = module.vpc.vpc_id
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = merge(var.tags, { Name = "${var.project}-igw" })
+}
+
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  map_public_ip_on_launch = true
+  availability_zone       = "${var.aws_region}a"
+
+  tags = merge(var.tags, { Name = "${var.project}-public" })
+}
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+
+  tags = merge(var.tags, { Name = "${var.project}-public-rt" })
+}
+
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
+# ── Security Group ──
+resource "aws_security_group" "app" {
+  name   = "${var.project}-sg"
+  vpc_id = aws_vpc.main.id
 
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.admin_cidr]
-  }
-
-  ingress {
-    from_port   = 6443
-    to_port     = 6443
-    protocol    = "tcp"
-    cidr_blocks = ["10.0.0.0/16"]
-    description = "K8s API server"
+    description = "SSH"
   }
 
   ingress {
@@ -73,12 +81,12 @@ resource "aws_security_group" "k8s_nodes" {
     description = "HTTPS"
   }
 
-  # Allow all internal cluster traffic
   ingress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
-    self      = true
+    from_port   = 8000
+    to_port     = 8000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "FastAPI app"
   }
 
   egress {
@@ -88,54 +96,32 @@ resource "aws_security_group" "k8s_nodes" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(var.tags, { Name = "${var.project}-k8s-nodes" })
+  tags = merge(var.tags, { Name = "${var.project}-sg" })
 }
 
-# ── EC2 Key Pair ──────────────────────────────────────────────────────────────
+# ── Key Pair ──
 resource "aws_key_pair" "deployer" {
   key_name   = "${var.project}-key"
   public_key = file(var.public_key_path)
 }
 
-# ── Control Plane Node ────────────────────────────────────────────────────────
-resource "aws_instance" "control_plane" {
+# ── Single EC2 Instance (t3.micro — Free Tier) ──
+resource "aws_instance" "app" {
   ami                    = var.ami_id
-  instance_type          = var.control_plane_instance_type
-  subnet_id              = module.vpc.public_subnets[0]
-  vpc_security_group_ids = [aws_security_group.k8s_nodes.id]
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.app.id]
   key_name               = aws_key_pair.deployer.key_name
+  associate_public_ip_address = true
 
   root_block_device {
     volume_size = 30
     volume_type = "gp3"
   }
 
-  user_data = templatefile("${path.module}/scripts/control-plane-init.sh", {
-    node_name = "control-plane"
+  user_data = templatefile("${path.module}/scripts/userdata.sh", {
+    github_repo = var.github_repo
   })
 
-  tags = merge(var.tags, {
-    Name = "${var.project}-control-plane"
-    Role = "control-plane"
-  })
-}
-
-# ── Worker Nodes ──────────────────────────────────────────────────────────────
-resource "aws_instance" "workers" {
-  count                  = var.worker_count
-  ami                    = var.ami_id
-  instance_type          = var.worker_instance_type
-  subnet_id              = module.vpc.private_subnets[count.index % length(module.vpc.private_subnets)]
-  vpc_security_group_ids = [aws_security_group.k8s_nodes.id]
-  key_name               = aws_key_pair.deployer.key_name
-
-  root_block_device {
-    volume_size = 20
-    volume_type = "gp3"
-  }
-
-  tags = merge(var.tags, {
-    Name = "${var.project}-worker-${count.index + 1}"
-    Role = "worker"
-  })
+  tags = merge(var.tags, { Name = "${var.project}-app" })
 }
