@@ -3,7 +3,7 @@ replicaCount: 2
 image:
   repository: ghcr.io/rohinicc/taskapi/taskapi
   pullPolicy: IfNotPresent
-  tag: sha-3488680
+  tag: sha-e8580fd
 
 service:
   type: ClusterIP
