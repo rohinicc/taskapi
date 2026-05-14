@@ -3,7 +3,7 @@ replicaCount: 2
 image:
   repository: ghcr.io/rohinicc/taskapi/taskapi
   pullPolicy: IfNotPresent
-  tag: latest          # <-- CI/CD pipeline updates this field
+  tag: sha-3488680
 
 service:
   type: ClusterIP
@@ -33,7 +33,7 @@ autoscaling:
 postgresql:
   enabled: true
   image:
-    tag: latest
+    tag: sha-3488680
     pullPolicy: IfNotPresent
   auth:
     username: postgres
@@ -48,7 +48,7 @@ postgresql:
 redis:
   enabled: true
   image:
-    tag: latest
+    tag: sha-3488680
   auth:
     enabled: false
   master:
