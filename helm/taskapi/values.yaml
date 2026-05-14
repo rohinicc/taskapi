@@ -33,7 +33,7 @@ autoscaling:
 postgresql:
   enabled: true
   image:
-    tag: sha-3488680
+    tag: latest
     pullPolicy: IfNotPresent
   auth:
     username: postgres
@@ -48,7 +48,7 @@ postgresql:
 redis:
   enabled: true
   image:
-    tag: sha-3488680
+    tag: latest
   auth:
     enabled: false
   master:
